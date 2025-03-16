@@ -4,6 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-actix-web = "4.10.2"
-rocket = "0.5.1"
-tokio = {version= "1", feature = ["full"]}
+actix-web = "4.0"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+config = "0.13"
+log = "0.4"
+env_logger = "0.10"
+thiserror = "1.0"

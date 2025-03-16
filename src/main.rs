@@ -1,15 +1,21 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello, world!")
-}
+use iploolup::config::Settings;
+use iploolup::run_server;
+use log::info;
+use std::env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new().route("/", web::get().to(hello))
-    })
-    .bind("127.0.0.1:6666")?
-    .run()
-    .await
+    // 設置日誌
+    if env::var("RUST_LOG").is_err() {
+        unsafe {
+            env::set_var("RUST_LOG", "info");
+        }
+    }
+    env_logger::init();
+    
+    let settings = Settings::new().expect("Failed to load settings");
+    
+    info!("Starting server at {}:{}", settings.server.host, settings.server.port);
+    
+    run_server(&settings.server.host, settings.server.port).await
 }
