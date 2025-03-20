@@ -1,13 +1,15 @@
 pub mod ip;
+pub mod ddns;
 
 use actix_web::{web, HttpResponse, Responder};
 
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
-    // 添加首頁路由
-    cfg.route("/", web::get().to(index));
-    
-    // 配置 IP 相關路由
-    ip::configure_routes(cfg);
+    cfg.service(
+        web::scope("/api/v1")
+            .route("/", web::get().to(index))
+            .configure(ip::configure_routes)
+            .configure(ddns::configure_routes)
+    );
 }
 
 async fn index() -> impl Responder {
@@ -17,7 +19,11 @@ async fn index() -> impl Responder {
         "version": "1.0.0",
         "endpoints": {
             "ipv4": "/api/v1/ip/v4",
-            "ipv6": "/api/v1/ip/v6"
+            "ipv6": "/api/v1/ip/v6",
+            "ddns": {
+                "ipv4": "/api/v1/ddns/update/ipv4",
+                "ipv6": "/api/v1/ddns/update/ipv6"
+            }
         }
     }))
 }

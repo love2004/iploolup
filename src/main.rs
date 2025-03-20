@@ -5,6 +5,9 @@ use std::env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // 載入 .env 檔案
+    dotenv::dotenv().ok();
+    
     // 設置日誌
     if env::var("RUST_LOG").is_err() {
         unsafe {

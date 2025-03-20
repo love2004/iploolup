@@ -1,1 +1,2 @@
-pub mod ip_service;
+pub mod ip;
+pub mod ddns;

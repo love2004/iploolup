@@ -1,16 +1,16 @@
 use actix_web::{web, HttpResponse, Responder};
-use crate::services::ip_service;
+use crate::services::ip;
 
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
-        web::scope("/api/v1")
-            .route("/ip/v4", web::get().to(get_ipv4))
-            .route("/ip/v6", web::get().to(get_ipv6))
+        web::scope("/ip")
+            .route("/v4", web::get().to(get_ipv4))
+            .route("/v6", web::get().to(get_ipv6))
     );
 }
 
 async fn get_ipv4() -> impl Responder {
-    match ip_service::fetch_ipv4().await {
+    match ip::fetch_ipv4().await {
         Ok(ip) => HttpResponse::Ok().json(serde_json::json!({
             "status": "success",
             "data": {
@@ -25,7 +25,7 @@ async fn get_ipv4() -> impl Responder {
 }
 
 async fn get_ipv6() -> impl Responder {
-    match ip_service::fetch_ipv6().await {
+    match ip::fetch_ipv6().await {
         Ok(ip) => HttpResponse::Ok().json(serde_json::json!({
             "status": "success",
             "data": {

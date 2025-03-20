@@ -18,4 +18,4 @@ async fn fetch_ip(url: &str) -> Result<String, AppError> {
         .map_err(|e| AppError::ExternalServiceError(e.to_string()))?;
     
     Ok(ip)
-}
+} 
