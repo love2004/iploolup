@@ -1,7 +1,7 @@
-use iploolup::config::Settings;
-use iploolup::config::DdnsConfigLoader;
-use iploolup::run_server;
-use iploolup::services::ddns::DdnsService;
+use cloudflare_ddns::config::Settings;
+use cloudflare_ddns::config::DdnsConfigLoader;
+use cloudflare_ddns::run_server;
+use cloudflare_ddns::services::ddns::DdnsService;
 use log::{info, error};
 use std::env;
 use std::process;
