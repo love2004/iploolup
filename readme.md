@@ -25,8 +25,8 @@ A high-performance DDNS update tool written in Rust, supporting both IPv4 and IP
 
 2. Clone this repository:
    ```
-   git clone https://github.com/yourusername/rust-ddns.git
-   cd rust-ddns
+   git clone https://github.com/love2004/Rust-DDNS-Updater.git
+   cd Rust-DDNS-Updater
    ```
 
 3. Compile the program:
