@@ -4,6 +4,8 @@
 
 A high-performance DDNS update tool written in Rust, supporting both IPv4 and IPv6.
 
+![image](image.png)
+
 ## Features
 
 - Support for IPv4 and IPv6 dual-stack updates
