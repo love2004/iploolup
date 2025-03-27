@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare DDNS 更新器</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .feature-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .feature-list li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav" style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <a href="/static/index.html" style="color: #4b72b2; text-decoration: none; font-weight: 500;">首頁</a>
+        <a href="/static/ddns-manager.html" style="color: #4b72b2; text-decoration: none; font-weight: 500;">DDNS配置管理</a>
+    </div>
+    
+    <div class="container">
+        <h1>Cloudflare DDNS 更新器</h1>
+        <p>這是一個基於 Rust 的 Cloudflare DDNS 更新器，可以自動檢測和更新您的域名 IP 地址。</p>
+        
+        <h2>主要功能</h2>
+        <ul class="feature-list">
+            <li>簡單易用的 Web 界面管理 DNS 記錄</li>
+            <li>支持 IPv4 和 IPv6 記錄</li>
+            <li>自動檢測公網 IP 變更</li>
+            <li>定時更新 DNS 記錄</li>
+            <li>多域名支持</li>
+            <li>自訂更新間隔時間</li>
+        </ul>
+        
+        <h2>開始使用</h2>
+        <p>點擊下方按鈕進入 DDNS 管理界面，開始配置您的域名。</p>
+        <p>
+            <a href="/static/ddns-manager.html" class="button">進入 DDNS 管理界面</a>
+        </p>
+    </div>
+    
+    <div class="container">
+        <h2>使用說明</h2>
+        <p>使用本工具，您需要：</p>
+        <ol>
+            <li>一個 Cloudflare 帳號</li>
+            <li>在 Cloudflare 上管理的域名</li>
+            <li>Cloudflare API Token（需要 DNS 編輯權限）</li>
+        </ol>
+        <p>在 DDNS 管理界面中，您可以輸入 API Token，然後管理您的 DNS 記錄，並設置自動更新。</p>
+    </div>
+</body>
+</html> 

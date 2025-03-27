@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare DDNS 管理界面</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <div class="nav" style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <a href="/static/index.html" style="color: #4b72b2; text-decoration: none; font-weight: 500;">首頁</a>
+        <a href="/static/ddns-manager.html" style="color: #4b72b2; text-decoration: none; font-weight: 500;">DDNS配置管理</a>
+    </div>
+    
+    <h1>Cloudflare DDNS 管理界面</h1>
+    
+    <div class="container section">
+        <h2>連接到 Cloudflare</h2>
+        <div class="form-group">
+            <label for="api-token">API Token</label>
+            <input type="password" id="api-token" placeholder="輸入您的 Cloudflare API Token" class="form-control">
+            <p class="hint">需要 Zone.DNS 權限的 API Token</p>
+        </div>
+        <button id="connect-btn">連接</button>
+        <div id="connect-loading" class="loading">連接中...</div>
+        <div id="connect-error" class="error hidden"></div>
+        <div id="connect-success" class="success hidden"></div>
+    </div>
+    
+    <div id="management-section" class="hidden">
+        <div class="container section">
+            <h2>DNS 記錄管理</h2>
+            <div class="form-group">
+                <label for="zone-select">選擇域名</label>
+                <select id="zone-select" class="form-control"></select>
+            </div>
+            <button id="load-records-btn">載入記錄</button>
+            <div id="records-loading" class="loading">載入中...</div>
+            <div id="records-error" class="error hidden"></div>
+            
+            <div class="form-group" style="margin-top: 15px;">
+                <input type="text" id="search-records" placeholder="搜索記錄..." class="form-control">
+            </div>
+            
+            <div class="responsive-table">
+                <table id="records-table">
+                    <thead>
+                        <tr>
+                            <th>名稱</th>
+                            <th>類型</th>
+                            <th>內容</th>
+                            <th>TTL</th>
+                            <th>Proxied</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-body"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="container section">
+            <h2>DDNS 配置</h2>
+            <button id="refresh-ddns-btn">刷新狀態</button>
+            <div id="ddns-loading" class="loading">載入中...</div>
+            <div id="ddns-error" class="error hidden"></div>
+            
+            <div class="responsive-table">
+                <table id="ddns-table">
+                    <thead>
+                        <tr>
+                            <th>記錄名稱</th>
+                            <th>記錄類型</th>
+                            <th>IP 類型</th>
+                            <th>更新間隔</th>
+                            <th>上次更新時間</th>
+                            <th>上次 IP</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ddns-body"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="container section">
+            <div id="create-form">
+                <h2>創建/編輯 DNS 記錄</h2>
+                <input type="hidden" id="editing-record-id">
+                <input type="hidden" id="editing-zone-id">
+                
+                <div class="form-group">
+                    <label for="new-record-name">記錄名稱</label>
+                    <input type="text" id="new-record-name" placeholder="例如: example.com" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-record-type">記錄類型</label>
+                    <select id="new-record-type" class="form-control">
+                        <option value="A">A</option>
+                        <option value="AAAA">AAAA</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-record-content">IP 地址</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="new-record-content" placeholder="例如: 192.168.1.1" class="form-control">
+                        <button id="fetch-ip-btn">獲取當前 IP</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-record-ttl">TTL (秒)</label>
+                    <input type="number" id="new-record-ttl" value="60" min="60" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="new-record-proxied"> 通過 Cloudflare 代理
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="enable-ddns"> 啟用 DDNS 自動更新
+                    </label>
+                </div>
+                
+                <div id="ddns-settings" class="hidden">
+                    <div class="form-group">
+                        <label for="ddns-update-interval">更新間隔 (秒)</label>
+                        <input type="number" id="ddns-update-interval" value="3600" min="60" class="form-control">
+                    </div>
+                </div>
+                
+                <div>
+                    <button id="create-record-btn">創建記錄</button>
+                    <button id="update-record-btn" class="hidden">更新記錄</button>
+                    <button id="cancel-edit-btn" class="hidden">取消編輯</button>
+                </div>
+                
+                <div id="create-loading" class="loading">處理中...</div>
+                <div id="create-error" class="error hidden"></div>
+                <div id="create-success" class="success hidden"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html> 

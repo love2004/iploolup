@@ -3,9 +3,12 @@
     "api_token": "your_cloudflare_api_token",
     "zone_id": "your_cloudflare_zone_id",
     "record_id": "your_cloudflare_record_id",
-    "record_name": "example.com",
+    "record_name": "your.domain.com",
     "update_interval": 300,
-    "ip_type": "ipv4"
+    "ip_type": "ipv4",
+    "log": {
+        "level": "info"
+    }
   },
   {
     "api_token": "your_cloudflare_api_token_for_ipv6",

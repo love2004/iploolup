@@ -1,21 +1,21 @@
-use cloudflare_ddns::config::Settings;
-use cloudflare_ddns::config::DdnsConfigLoader;
-use cloudflare_ddns::run_server;
-use cloudflare_ddns::services::ddns::DdnsService;
+use cloudflare_ddns::{
+    run_server, 
+    ServiceFactory, 
+    DdnsConfig,
+    Settings,
+    IpType
+};
 use log::{info, error};
 use std::env;
 use std::process;
 use std::sync::mpsc;
-use std::sync::Mutex;
-use std::sync::Once;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
-// 用於控制DDNS服務的全局變量
+// 用於控制 DDNS 服務的全局變量
 static DDNS_CONTROL: once_cell::sync::Lazy<Arc<Mutex<Option<mpsc::Sender<()>>>>> = 
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
-static INIT_DDNS_CONTROL: Once = Once::new();
 
-// 重啟DDNS服務的公共函數
+// 重啟 DDNS 服務的公共函數
 pub fn restart_ddns_service() {
     if let Ok(mut ctrl) = DDNS_CONTROL.lock() {
         if let Some(sender) = ctrl.take() {
@@ -23,7 +23,7 @@ pub fn restart_ddns_service() {
             let _ = sender.send(());
         }
         
-        // 啟動新的DDNS服務
+        // 啟動新的 DDNS 服務
         start_ddns_service();
     }
 }
@@ -104,8 +104,11 @@ async fn main() -> std::io::Result<()> {
 async fn run_ddns_service() -> std::io::Result<()> {
     info!("Starting DDNS service...");
     
-    // 載入配置
-    let configs = match DdnsConfigLoader::load_all_configs() {
+    // 建立服務工廠
+    let service_factory = ServiceFactory::new();
+    
+    // 從環境變數載入配置
+    let configs = match load_ddns_configs_from_env() {
         Ok(configs) => configs,
         Err(e) => {
             error!("Failed to load DDNS configuration: {}", e);
@@ -127,8 +130,10 @@ async fn run_ddns_service() -> std::io::Result<()> {
         let ip_type = ddns_config.ip_type.clone();
         info!("Starting {} DDNS update service", ip_type);
         
-        // 啟動 DDNS 自動更新任務
-        let ddns_service = DdnsService::new(ddns_config);
+        // 建立 DDNS 應用服務
+        let ddns_service = service_factory.create_ddns_service(ddns_config);
+        
+        // 啟動自動更新任務
         let handle = tokio::spawn(async move {
             ddns_service.start_auto_update().await;
         });
@@ -146,4 +151,57 @@ async fn run_ddns_service() -> std::io::Result<()> {
     }
     
     Ok(())
+}
+
+/// 從環境變數載入 DDNS 配置
+fn load_ddns_configs_from_env() -> Result<Vec<DdnsConfig>, String> {
+    let mut configs = Vec::new();
+    
+    // 載入 IPv4 配置
+    if let (Ok(api_token), Ok(zone_id), Ok(record_id), Ok(record_name)) = (
+        env::var("CLOUDFLARE_API_TOKEN"),
+        env::var("CLOUDFLARE_ZONE_ID"),
+        env::var("CLOUDFLARE_RECORD_ID"),
+        env::var("CLOUDFLARE_RECORD_NAME")
+    ) {
+        let update_interval = env::var("DDNS_UPDATE_INTERVAL")
+            .map(|s| s.parse::<u64>().unwrap_or(300))
+            .unwrap_or(300);
+        
+        let ipv4_config = DdnsConfig {
+            api_token,
+            zone_id,
+            record_id,
+            record_name,
+            update_interval,
+            ip_type: IpType::IPv4,
+        };
+        
+        configs.push(ipv4_config);
+    }
+    
+    // 載入 IPv6 配置
+    if let (Ok(api_token), Ok(zone_id), Ok(record_id), Ok(record_name)) = (
+        env::var("CLOUDFLARE_API_TOKEN"),
+        env::var("CLOUDFLARE_ZONE_ID"),
+        env::var("CLOUDFLARE_RECORD_ID_V6"),
+        env::var("CLOUDFLARE_RECORD_NAME_V6")
+    ) {
+        let update_interval = env::var("DDNS_UPDATE_INTERVAL")
+            .map(|s| s.parse::<u64>().unwrap_or(300))
+            .unwrap_or(300);
+        
+        let ipv6_config = DdnsConfig {
+            api_token,
+            zone_id,
+            record_id,
+            record_name,
+            update_interval,
+            ip_type: IpType::IPv6,
+        };
+        
+        configs.push(ipv6_config);
+    }
+    
+    Ok(configs)
 }

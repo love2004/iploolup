@@ -1,12 +1,17 @@
-pub mod api;
-pub mod services;
-pub mod config;
-pub mod error;
+pub mod domain;
+pub mod application;
+pub mod infrastructure;
+pub mod interfaces;
 
-use actix_web::{App, HttpServer, middleware::Logger, web};
-use std::io;
-use log::info;
-use services::ddns_config::DdnsConfigManager;
+// 重新導出常用類型和結構
+pub use application::ServiceFactory;
+pub use domain::config::{DdnsConfig, IpType, Settings};
+pub use domain::error::DomainError;
+pub use application::error::ApplicationError;
+
+// 重新導出服務啟動函數（暫時保留）
+pub use actix_web::{web, App, HttpServer};
+pub use actix_cors::Cors;
 
 /// 啟動 Web 伺服器
 /// 
@@ -24,20 +29,28 @@ use services::ddns_config::DdnsConfigManager;
 /// - 配置並啟動 HTTP 伺服器
 /// - 設置日誌中間件
 /// - 配置 API 路由
-pub async fn run_server(host: &str, port: u16) -> io::Result<()> {
-    info!("Configuring server...");
+pub async fn run_server(host: &str, port: u16) -> std::io::Result<()> {
+    let address = format!("{}:{}", host, port);
     
-    // 創建DDNS配置管理器
-    let ddns_config_manager = web::Data::new(DdnsConfigManager::new());
+    // 創建服務工廠
+    let service_factory = web::Data::new(ServiceFactory::new());
     
     HttpServer::new(move || {
+        // 啟用 CORS
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header();
+        
         App::new()
-            .wrap(Logger::default())
-            .app_data(ddns_config_manager.clone())
-            .configure(api::configure_routes)
-            .configure(services::web_ui::configure_routes)
+            .wrap(cors)
+            // 注冊服務工廠
+            .app_data(service_factory.clone())
+            // 配置路由
+            .configure(interfaces::api::configure_routes)
+            .configure(interfaces::web::configure_routes)
     })
-    .bind(format!("{}:{}", host, port))?
+    .bind(address)?
     .run()
     .await
 }
