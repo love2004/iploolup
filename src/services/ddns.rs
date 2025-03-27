@@ -30,14 +30,16 @@ pub struct DdnsConfig {
 /// # 欄位
 /// 
 /// - `success`: 請求是否成功
-/// - `errors`: 錯誤訊息列表
-/// - `messages`: 提示訊息列表
-/// - `result`: API 響應結果
+/// - `errors`: 錯誤訊息列表 (可選)
+/// - `messages`: 提示訊息列表 (可選)
+/// - `result`: API 響應結果 (可選)
 #[derive(Serialize, Deserialize, Debug)]
 struct CloudflareResponse {
     success: bool,
-    errors: Vec<String>,
-    messages: Vec<String>,
+    #[serde(default)]
+    errors: Vec<serde_json::Value>,
+    #[serde(default)]
+    messages: Vec<serde_json::Value>,
     result: Option<serde_json::Value>,
 }
 
@@ -167,7 +169,7 @@ impl DdnsService {
             info!("Cloudflare API returned successful response");
             Ok(result)
         } else {
-            let error_msg = format!("Cloudflare API error: {:?}", cf_response.errors);
+            let error_msg = format!("Cloudflare API error: {}", serde_json::to_string(&cf_response.errors).unwrap_or_else(|_| format!("{:?}", cf_response.errors)));
             error!("Failed to update {} DNS record: {}", self.config.ip_type, error_msg);
             Err(AppError::ExternalServiceError(error_msg))
         }
