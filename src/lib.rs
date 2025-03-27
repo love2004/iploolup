@@ -3,9 +3,10 @@ pub mod services;
 pub mod config;
 pub mod error;
 
-use actix_web::{App, HttpServer, middleware::Logger};
+use actix_web::{App, HttpServer, middleware::Logger, web};
 use std::io;
 use log::info;
+use services::ddns_config::DdnsConfigManager;
 
 /// 啟動 Web 伺服器
 /// 
@@ -26,10 +27,15 @@ use log::info;
 pub async fn run_server(host: &str, port: u16) -> io::Result<()> {
     info!("Configuring server...");
     
-    HttpServer::new(|| {
+    // 創建DDNS配置管理器
+    let ddns_config_manager = web::Data::new(DdnsConfigManager::new());
+    
+    HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
+            .app_data(ddns_config_manager.clone())
             .configure(api::configure_routes)
+            .configure(services::web_ui::configure_routes)
     })
     .bind(format!("{}:{}", host, port))?
     .run()

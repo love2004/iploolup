@@ -220,3 +220,52 @@ Issues and Pull Requests are welcome!
 ## License
 
 MIT License
+
+## Web管理界面
+
+此版本新增了Web管理界面功能，讓您可以更輕鬆地管理Cloudflare DNS記錄和DDNS配置。
+
+### 功能特點
+
+1. **查看所有Zone ID和Record ID**：輸入API Token後，可以查看您所有的Cloudflare區域(Zones)和DNS記錄。
+2. **創建DNS記錄**：可以在界面上快速創建新的DNS記錄，用於DDNS更新。
+3. **自動獲取當前IP**：在創建記錄時可一鍵獲取當前的IPv4或IPv6地址。
+4. **DDNS配置管理**：直接在Web界面上管理DDNS配置，無需手動編輯配置文件或環境變量。
+5. **配置即時生效**：修改配置後可一鍵重啟DDNS服務，使新配置立即生效。
+
+### 使用方法
+
+#### DNS記錄管理
+
+1. 啟動應用程序後，訪問 `http://localhost:8080/ui` 或配置的其他地址。
+2. 在API認證區域輸入您的Cloudflare API Token。
+3. 連接成功後，選擇一個區域(Zone)，點擊「載入DNS記錄」查看所有記錄。
+4. 在「創建DDNS記錄」區域，填寫記錄信息：
+   - 記錄名稱：例如 `ddns.example.com`
+   - 記錄類型：選擇A(IPv4)或AAAA(IPv6)
+   - IP地址：點擊「獲取當前IP」自動填入當前IP
+   - TTL：TTL值，默認120秒
+   - 代理狀態：是否啟用Cloudflare代理
+5. 點擊「創建記錄」完成DNS記錄創建。
+
+#### DDNS配置管理
+
+1. 訪問 `http://localhost:8080/ui/ddns-manager` 進入DDNS配置管理界面。
+2. 在此界面可以：
+   - 查看當前所有DDNS配置（環境變量和配置文件）
+   - 添加/編輯環境變量配置
+   - 添加/編輯配置文件配置
+   - 刪除不需要的配置
+   - 重啟DDNS服務使配置生效
+
+3. 環境變量配置：
+   - 選擇IP類型（IPv4或IPv6）
+   - 填寫Cloudflare API信息
+   - 點擊「保存環境變量配置」
+
+4. 配置文件配置：
+   - 選擇IP類型（IPv4或IPv6）
+   - 填寫Cloudflare API信息
+   - 點擊「保存到配置文件」
+
+配置完成後，您可以點擊「重啟DDNS服務」按鈕使新的配置立即生效。配置會自動保存到.env文件或配置JSON文件中，在應用重啟後依然有效。

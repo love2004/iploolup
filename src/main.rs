@@ -5,6 +5,28 @@ use cloudflare_ddns::services::ddns::DdnsService;
 use log::{info, error};
 use std::env;
 use std::process;
+use std::sync::mpsc;
+use std::sync::Mutex;
+use std::sync::Once;
+use std::sync::Arc;
+
+// 用於控制DDNS服務的全局變量
+static DDNS_CONTROL: once_cell::sync::Lazy<Arc<Mutex<Option<mpsc::Sender<()>>>>> = 
+    once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
+static INIT_DDNS_CONTROL: Once = Once::new();
+
+// 重啟DDNS服務的公共函數
+pub fn restart_ddns_service() {
+    if let Ok(mut ctrl) = DDNS_CONTROL.lock() {
+        if let Some(sender) = ctrl.take() {
+            // 發送停止信號給當前服務
+            let _ = sender.send(());
+        }
+        
+        // 啟動新的DDNS服務
+        start_ddns_service();
+    }
+}
 
 /// 啟動 DDNS 服務（作為獨立進程）
 fn start_ddns_service() {
