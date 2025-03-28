@@ -8,10 +8,14 @@ pub use application::ServiceFactory;
 pub use domain::config::{DdnsConfig, IpType, Settings};
 pub use domain::error::DomainError;
 pub use application::error::ApplicationError;
+pub use application::events::{EventManager, EventType, EventData};
 
-// 重新導出服務啟動函數（暫時保留）
+// 重新導出服務啟動函數
 pub use actix_web::{web, App, HttpServer};
 pub use actix_cors::Cors;
+use std::path::Path;
+use std::sync::Arc;
+use log::info;
 
 /// 啟動 Web 伺服器
 /// 
@@ -32,8 +36,31 @@ pub use actix_cors::Cors;
 pub async fn run_server(host: &str, port: u16) -> std::io::Result<()> {
     let address = format!("{}:{}", host, port);
     
+    // 確保靜態文件目錄存在
+    let static_dir = Path::new("static");
+    if !static_dir.exists() {
+        std::fs::create_dir_all(static_dir)?;
+        info!("Created static directory");
+    }
+    
+    // 確保index.html存在
+    let index_path = static_dir.join("index.html");
+    if !index_path.exists() {
+        info!("Static files not found, web UI may not work correctly");
+    } else {
+        info!("Found static files, web UI should be available");
+    }
+    
     // 創建服務工廠
-    let service_factory = web::Data::new(ServiceFactory::new());
+    let service_factory = ServiceFactory::new();
+    let service_factory_arc = Arc::new(service_factory);
+    
+    // 初始化事件監聽系統
+    service_factory_arc.init_event_listeners().await;
+    info!("事件系統已初始化");
+    
+    // 包裝為web::Data
+    let service_factory_data = web::Data::new(service_factory_arc);
     
     HttpServer::new(move || {
         // 啟用 CORS
@@ -45,7 +72,7 @@ pub async fn run_server(host: &str, port: u16) -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             // 注冊服務工廠
-            .app_data(service_factory.clone())
+            .app_data(service_factory_data.clone())
             // 配置路由
             .configure(interfaces::api::configure_routes)
             .configure(interfaces::web::configure_routes)

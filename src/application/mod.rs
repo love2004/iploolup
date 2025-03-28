@@ -1,7 +1,9 @@
-pub mod ddns;
-pub mod config;
 pub mod error;
-mod factories;
+pub mod factories;
+pub mod config;
+pub mod ddns;
+pub mod events;
 
+pub use factories::ServiceFactory;
 pub use error::ApplicationError;
-pub use factories::ServiceFactory; 
+pub use events::{EventManager, EventType, EventListener}; 

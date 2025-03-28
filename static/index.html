@@ -1,65 +1,149 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+    <!-- 測試標記：更新於 2025-03-28 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloudflare DDNS 更新器</title>
-    <link rel="stylesheet" href="/static/css/main.css">
-    <style>
-        .feature-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .feature-list li {
-            margin-bottom: 10px;
-            padding-left: 25px;
-            position: relative;
-        }
-        .feature-list li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #2ecc71;
-            font-weight: bold;
-        }
-    </style>
+    <title>Rust DDNS 更新工具</title>
+    <link rel="stylesheet" href="/ui/css/style.css">
 </head>
 <body>
-    <div class="nav" style="display: flex; gap: 15px; margin-bottom: 20px;">
-        <a href="/static/index.html" style="color: #4b72b2; text-decoration: none; font-weight: 500;">首頁</a>
-        <a href="/static/ddns-manager.html" style="color: #4b72b2; text-decoration: none; font-weight: 500;">DDNS配置管理</a>
+    <div class="container">
+        <header>
+            <h1>Rust DDNS 更新工具</h1>
+            <p>一個用於自動更新 Cloudflare DNS 記錄的工具</p>
+        </header>
+        
+        <main>
+            <section class="status-card">
+                <h2>DDNS 服務狀態</h2>
+                <div id="status-container">
+                    <p>載入中...</p>
+                </div>
+            </section>
+            
+            <section class="actions-card">
+                <h2>操作</h2>
+                <div class="button-group">
+                    <button id="update-btn" class="btn primary">強制更新</button>
+                    <button id="restart-btn" class="btn secondary">重啟服務</button>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>Rust DDNS 更新工具 &copy; 2023</p>
+        </footer>
     </div>
     
-    <div class="container">
-        <h1>Cloudflare DDNS 更新器</h1>
-        <p>這是一個基於 Rust 的 Cloudflare DDNS 更新器，可以自動檢測和更新您的域名 IP 地址。</p>
+    <script>
+        // 獲取服務狀態
+        async function getStatus() {
+            try {
+                const response = await fetch('/api/status');
+                if (!response.ok) {
+                    throw new Error('獲取狀態失敗');
+                }
+                const data = await response.json();
+                
+                const statusContainer = document.getElementById('status-container');
+                statusContainer.innerHTML = `
+                    <div class="status-item">
+                        <span class="label">狀態:</span>
+                        <span class="value ${data.status === 'running' ? 'success' : 'error'}">${data.status}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">版本:</span>
+                        <span class="value">${data.version}</span>
+                    </div>
+                    ${data.last_update ? `
+                    <div class="status-item">
+                        <span class="label">上次更新:</span>
+                        <span class="value">${data.last_update}</span>
+                    </div>` : ''}
+                    ${data.ip_address ? `
+                    <div class="status-item">
+                        <span class="label">IP地址:</span>
+                        <span class="value">${data.ip_address}</span>
+                    </div>` : ''}
+                    ${data.domain ? `
+                    <div class="status-item">
+                        <span class="label">域名:</span>
+                        <span class="value">${data.domain}</span>
+                    </div>` : ''}
+                `;
+            } catch (error) {
+                console.error('獲取狀態出錯:', error);
+                document.getElementById('status-container').innerHTML = `
+                    <p class="error">獲取服務狀態失敗: ${error.message}</p>
+                `;
+            }
+        }
         
-        <h2>主要功能</h2>
-        <ul class="feature-list">
-            <li>簡單易用的 Web 界面管理 DNS 記錄</li>
-            <li>支持 IPv4 和 IPv6 記錄</li>
-            <li>自動檢測公網 IP 變更</li>
-            <li>定時更新 DNS 記錄</li>
-            <li>多域名支持</li>
-            <li>自訂更新間隔時間</li>
-        </ul>
+        // 強制更新 DNS 記錄
+        async function forceUpdate() {
+            try {
+                const response = await fetch('/api/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('更新請求失敗');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('更新請求已發送: ' + data.message);
+                    // 重新獲取狀態
+                    await getStatus();
+                } else {
+                    alert('更新失敗: ' + data.message);
+                }
+            } catch (error) {
+                console.error('更新出錯:', error);
+                alert('更新請求出錯: ' + error.message);
+            }
+        }
         
-        <h2>開始使用</h2>
-        <p>點擊下方按鈕進入 DDNS 管理界面，開始配置您的域名。</p>
-        <p>
-            <a href="/static/ddns-manager.html" class="button">進入 DDNS 管理界面</a>
-        </p>
-    </div>
-    
-    <div class="container">
-        <h2>使用說明</h2>
-        <p>使用本工具，您需要：</p>
-        <ol>
-            <li>一個 Cloudflare 帳號</li>
-            <li>在 Cloudflare 上管理的域名</li>
-            <li>Cloudflare API Token（需要 DNS 編輯權限）</li>
-        </ol>
-        <p>在 DDNS 管理界面中，您可以輸入 API Token，然後管理您的 DNS 記錄，並設置自動更新。</p>
-    </div>
+        // 重啟 DDNS 服務
+        async function restartService() {
+            try {
+                const response = await fetch('/api/restart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('重啟請求失敗');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('重啟請求已發送: ' + data.message);
+                    // 重新獲取狀態
+                    setTimeout(getStatus, 2000);
+                } else {
+                    alert('重啟失敗: ' + data.message);
+                }
+            } catch (error) {
+                console.error('重啟出錯:', error);
+                alert('重啟請求出錯: ' + error.message);
+            }
+        }
+        
+        // 頁面加載後獲取狀態
+        document.addEventListener('DOMContentLoaded', getStatus);
+        
+        // 綁定按鈕事件
+        document.getElementById('update-btn').addEventListener('click', forceUpdate);
+        document.getElementById('restart-btn').addEventListener('click', restartService);
+    </script>
 </body>
 </html> 

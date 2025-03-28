@@ -15,6 +15,18 @@ use std::sync::{Arc, Mutex};
 static DDNS_CONTROL: once_cell::sync::Lazy<Arc<Mutex<Option<mpsc::Sender<()>>>>> = 
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
 
+/// 顯示使用方法說明
+fn help() {
+    println!("Rust DDNS 更新工具");
+    println!("用法: cloudflare-ddns [選項]");
+    println!("");
+    println!("選項:");
+    println!("  --help, -h       顯示這個幫助訊息");
+    println!("  --ddns           只運行 DDNS 更新服務");
+    println!("  --web            只運行 Web 伺服器");
+    println!("  無參數            同時運行 DDNS 服務和 Web 伺服器");
+}
+
 // 重啟 DDNS 服務的公共函數
 pub fn restart_ddns_service() {
     if let Ok(mut ctrl) = DDNS_CONTROL.lock() {
@@ -72,11 +84,33 @@ async fn main() -> std::io::Result<()> {
     
     // 設置日誌
     if env::var("RUST_LOG").is_err() {
-        unsafe {
-            env::set_var("RUST_LOG", "info");
-        }
+        env::set_var("RUST_LOG", "info");
     }
     env_logger::init();
+    
+    // 處理命令行參數
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1 {
+        match args[1].as_str() {
+            "--help" | "-h" => {
+                help();
+                return Ok(());
+            },
+            "--ddns" => {
+                return run_ddns_service().await;
+            },
+            "--web" => {
+                // 不啟動 DDNS 服務，只運行 Web 伺服器
+                let settings = Settings::new().expect("Failed to load settings");
+                info!("Starting Web server at {}:{}", settings.server.host, settings.server.port);
+                return run_server(&settings.server.host, settings.server.port).await;
+            },
+            _ => {
+                help();
+                return Ok(());
+            }
+        }
+    }
     
     // 檢查運行模式
     let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "web".to_string());
@@ -131,7 +165,7 @@ async fn run_ddns_service() -> std::io::Result<()> {
         info!("Starting {} DDNS update service", ip_type);
         
         // 建立 DDNS 應用服務
-        let ddns_service = service_factory.create_ddns_service(ddns_config);
+        let ddns_service = service_factory.create_ddns_service(ddns_config).await;
         
         // 啟動自動更新任務
         let handle = tokio::spawn(async move {

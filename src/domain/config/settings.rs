@@ -29,7 +29,7 @@ impl Settings {
     /// 
     /// # 功能
     /// 
-    /// 從配置文件加載設置
+    /// 優先從環境變量加載設置，如果環境變量不存在則從配置文件加載
     /// 
     /// # 返回
     /// 
@@ -40,6 +40,12 @@ impl Settings {
     /// - `config/default.toml`: 默認設置
     /// - `config/{run_mode}.toml`: 環境特定設置
     pub fn new() -> Result<Self, ConfigError> {
+        // 嘗試從環境變量加載
+        if env::var("SERVER_HOST").is_ok() || env::var("SERVER_PORT").is_ok() {
+            return Self::from_env();
+        }
+        
+        // 從配置文件加載
         let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "development".into());
         
         let s = Config::builder()

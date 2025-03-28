@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use crate::domain::error::DomainError;
 use std::fmt;
+use std::hash::Hash;
 
 /// IP 類型枚舉
 /// 
@@ -8,7 +9,7 @@ use std::fmt;
 /// 
 /// - `IPv4`: IPv4 地址
 /// - `IPv6`: IPv6 地址
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum IpType {
     #[serde(rename = "ipv4")]
     IPv4,

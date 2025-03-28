@@ -4,12 +4,13 @@ use crate::domain::error::DomainError;
 use crate::domain::ip::IpService;
 use crate::domain::state::StateRepository;
 use std::sync::Arc;
-use chrono::Utc;
+use chrono::{Utc, DateTime};
 use log::{info, error, debug};
 use std::time::Duration as StdDuration;
 use tokio::time::sleep;
 
 /// DDNS 應用服務
+#[derive(Clone)]
 pub struct DdnsApplicationService {
     dns_service: Arc<dyn DnsService>,
     ip_service: Arc<dyn IpService>,
@@ -38,6 +39,43 @@ impl DdnsApplicationService {
             state_repository,
             config,
         }
+    }
+    
+    /// 獲取配置
+    pub fn config(&self) -> &DdnsConfig {
+        &self.config
+    }
+    
+    /// 強制更新 DNS 記錄
+    ///
+    /// # 返回
+    ///
+    /// - `Result<(String, String), DomainError>`: 成功時返回 (域名, IP)，失敗時返回錯誤
+    pub async fn force_update(&self) -> Result<(String, String), DomainError> {
+        let result = self.update_dns_record().await?;
+        Ok((self.config.record_name.clone(), result.record.content))
+    }
+    
+    /// 為 API 獲取當前 IP (供 Status API 使用)
+    ///
+    /// # 返回
+    ///
+    /// - `Result<String, DomainError>`: 成功時返回 IP 地址，失敗時返回錯誤
+    pub async fn get_current_ip_for_api(&self) -> Result<String, DomainError> {
+        self.get_current_ip().await
+    }
+    
+    /// 為 API 獲取最後更新時間 (供 Status API 使用)
+    ///
+    /// # 參數
+    ///
+    /// - `config_id`: 配置 ID
+    ///
+    /// # 返回
+    ///
+    /// - `Result<Option<DateTime<Utc>>, DomainError>`: 成功時返回最後更新時間，失敗時返回錯誤
+    pub async fn get_last_update_for_api(&self, config_id: &str) -> Result<Option<DateTime<Utc>>, DomainError> {
+        self.state_repository.get_last_update_time(config_id).await
     }
     
     /// 獲取當前 IP 地址

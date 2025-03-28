@@ -1,2 +1,19 @@
 /target
 .env
+# 配置文件，避免提交個人配置
+/config/ddns.json
+# 日誌文件
+*.log
+# 系統生成的文件
+.DS_Store
+Thumbs.db
+# IDE 文件
+.idea/
+.vscode/
+*.iml
+# 臨時文件
+*.tmp
+*.swp
+# 如果專案有 Node.js 前端，忽略這些
+/node_modules
+/dist
