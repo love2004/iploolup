@@ -1,3 +1,3 @@
 mod client;
 
-pub use client::{HttpClient, HttpClientExt}; 
+pub use client::{HttpClient, HttpClientExt, ArcHttpClientExt}; 

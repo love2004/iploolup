@@ -1,6 +1,6 @@
 use crate::domain::error::DomainError;
 use crate::domain::dns::{DnsService, DnsRecord, DnsUpdateResult};
-use crate::domain::http::HttpClientExt;
+use crate::domain::http::{HttpClient, HttpClientExt, ArcHttpClientExt};
 use crate::domain::config::DdnsConfig;
 use crate::infrastructure::http::ReqwestHttpClient;
 use async_trait::async_trait;
@@ -41,9 +41,20 @@ impl CloudflareDnsService {
     ///
     /// - `http_client`: HTTP 客戶端
     /// - `config`: DDNS 配置
-    pub fn new(http_client: Arc<ReqwestHttpClient>, config: DdnsConfig) -> Self {
+    pub fn new(http_client: Arc<dyn crate::domain::http::HttpClient>, config: DdnsConfig) -> Self {
+        // 由於 HttpClientExt 不是對象安全的，我們需要通過類型轉換來實現
+        // 在實際應用中，可能需要修改架構以避免這種類型轉換
+        let reqwest_client = match http_client.downcast_arc::<ReqwestHttpClient>() {
+            Ok(client) => client,
+            Err(_) => {
+                // 創建一個新的 ReqwestHttpClient 作為備選
+                log::warn!("Unable to downcast HTTP client to ReqwestHttpClient, creating a new instance");
+                Arc::new(ReqwestHttpClient::new())
+            }
+        };
+        
         Self {
-            http_client,
+            http_client: reqwest_client,
             config,
         }
     }
@@ -59,7 +70,7 @@ impl CloudflareDnsService {
         headers.insert(
             AUTHORIZATION,
             HeaderValue::from_str(&format!("Bearer {}", self.config.api_token)).map_err(|_| {
-                DomainError::ValidationError("Invalid API token".to_string())
+                DomainError::validation("Invalid API token".to_string())
             })?,
         );
         
@@ -132,7 +143,7 @@ impl DnsService for CloudflareDnsService {
         
         match response.result {
             Some(record) => Ok(record),
-            None => Err(DomainError::NotFoundError(format!("DNS record not found: {}", record_id))),
+            None => Err(DomainError::dns_service(format!("DNS record not found: {}", record_id))),
         }
     }
     

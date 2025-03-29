@@ -9,6 +9,8 @@ use tokio::sync::{RwLock, watch};
 use tokio::time::{sleep, Duration};
 use tokio::task;
 use serde_json;
+use serde_yaml;
+use toml;
 
 /// 配置文件路徑
 const CONFIG_FILE_PATH: &str = "config/ddns.json";
@@ -61,7 +63,7 @@ impl FileConfigRepository {
         // 讀取配置文件
         let contents = match fs::read_to_string(&self.config_path) {
             Ok(contents) => contents,
-            Err(e) => return Err(DomainError::ConfigError(format!("Failed to read config file: {}", e))),
+            Err(e) => return Err(DomainError::config(format!("Failed to read config file: {}", e))),
         };
         
         // 解析 JSON
@@ -93,7 +95,7 @@ impl FileConfigRepository {
                         
                         Ok(vec![config])
                     },
-                    Err(_) => Err(DomainError::ConfigError(format!("Failed to parse config file: {}", e))),
+                    Err(_) => Err(DomainError::config(format!("Failed to parse config file: {}", e))),
                 }
             }
         }
@@ -104,17 +106,17 @@ impl FileConfigRepository {
         // 將配置序列化為 JSON
         let json = match serde_json::to_string_pretty(configs) {
             Ok(json) => json,
-            Err(e) => return Err(DomainError::ConfigError(format!("Failed to serialize configs: {}", e))),
+            Err(e) => return Err(DomainError::config(format!("Failed to serialize configs: {}", e))),
         };
         
         // 寫入文件
         let mut file = match File::create(&self.config_path) {
             Ok(file) => file,
-            Err(e) => return Err(DomainError::ConfigError(format!("Failed to create config file: {}", e))),
+            Err(e) => return Err(DomainError::config(format!("Failed to create config file: {}", e))),
         };
         
         if let Err(e) = file.write_all(json.as_bytes()) {
-            return Err(DomainError::ConfigError(format!("Failed to write config file: {}", e)));
+            return Err(DomainError::config(format!("Failed to write config file: {}", e)));
         }
         
         // 更新最後修改時間
@@ -213,6 +215,35 @@ impl FileConfigRepository {
         let mut is_watching = self.is_watching.write().await;
         *is_watching = false;
         info!("Config file watcher will stop on next check");
+    }
+
+    /// 從指定路徑讀取配置文件
+    pub fn read(&self, path: &PathBuf) -> Result<DdnsConfig, DomainError> {
+        if !path.exists() {
+            return Err(DomainError::config(format!("Config file not found: {}", path.display())));
+        }
+        
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| DomainError::config(format!("Failed to read config file: {}", e)))?;
+        
+        self.parse(&content)
+    }
+    
+    /// 解析配置文件內容
+    pub fn parse(&self, content: &str) -> Result<DdnsConfig, DomainError> {
+        // 嘗試解析為 YAML
+        if let Ok(config) = serde_yaml::from_str::<DdnsConfig>(content) {
+            return Ok(config);
+        }
+        
+        // 嘗試解析為 JSON
+        if let Ok(config) = serde_json::from_str::<DdnsConfig>(content) {
+            return Ok(config);
+        }
+        
+        // 嘗試解析為 TOML
+        toml::from_str::<DdnsConfig>(content)
+            .map_err(|e| DomainError::config(format!("Failed to parse config file: {}", e)))
     }
 }
 

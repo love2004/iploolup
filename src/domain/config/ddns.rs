@@ -28,12 +28,12 @@ impl fmt::Display for IpType {
 
 impl TryFrom<&str> for IpType {
     type Error = DomainError;
-
+    
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
+        match value.to_lowercase().as_str() {
             "ipv4" => Ok(IpType::IPv4),
             "ipv6" => Ok(IpType::IPv6),
-            _ => Err(DomainError::ValidationError(format!("Invalid IP type: {}", value))),
+            _ => Err(DomainError::validation(format!("Invalid IP type: {}", value))),
         }
     }
 }
@@ -68,27 +68,27 @@ impl DdnsConfig {
     pub fn validate(&self) -> Result<(), DomainError> {
         // 驗證 API 令牌
         if self.api_token.trim().is_empty() {
-            return Err(DomainError::ValidationError("API token cannot be empty".to_string()));
+            return Err(DomainError::validation("API token cannot be empty".to_string()));
         }
         
         // 驗證區域 ID
         if self.zone_id.trim().is_empty() {
-            return Err(DomainError::ValidationError("Zone ID cannot be empty".to_string()));
+            return Err(DomainError::validation("Zone ID cannot be empty".to_string()));
         }
         
         // 驗證記錄 ID
         if self.record_id.trim().is_empty() {
-            return Err(DomainError::ValidationError("Record ID cannot be empty".to_string()));
+            return Err(DomainError::validation("Record ID cannot be empty".to_string()));
         }
         
         // 驗證記錄名稱
         if self.record_name.trim().is_empty() {
-            return Err(DomainError::ValidationError("Record name cannot be empty".to_string()));
+            return Err(DomainError::validation("Record name cannot be empty".to_string()));
         }
         
         // 驗證更新間隔
         if self.update_interval < 5 {
-            return Err(DomainError::ValidationError("Update interval cannot be less than 5 seconds".to_string()));
+            return Err(DomainError::validation("Update interval cannot be less than 5 seconds".to_string()));
         }
         
         Ok(())

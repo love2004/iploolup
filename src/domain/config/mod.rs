@@ -47,19 +47,19 @@ impl ConfigLoader {
     /// 獲取 DDNS 配置
     pub fn get_ddns_config(&self) -> Result<DdnsConfig, DomainError> {
         let api_token = self.config.get_string("api_token").map_err(|e| {
-            DomainError::ConfigError(format!("缺少 API 令牌: {}", e))
+            DomainError::config(format!("缺少 API 令牌: {}", e))
         })?;
         
         let zone_id = self.config.get_string("zone_id").map_err(|e| {
-            DomainError::ConfigError(format!("缺少區域 ID: {}", e))
+            DomainError::config(format!("缺少區域 ID: {}", e))
         })?;
         
         let record_id = self.config.get_string("record_id").map_err(|e| {
-            DomainError::ConfigError(format!("缺少記錄 ID: {}", e))
+            DomainError::config(format!("缺少記錄 ID: {}", e))
         })?;
         
         let record_name = self.config.get_string("record_name").map_err(|e| {
-            DomainError::ConfigError(format!("缺少記錄名稱: {}", e))
+            DomainError::config(format!("缺少記錄名稱: {}", e))
         })?;
         
         let update_interval = self.config.get_int("update_interval").unwrap_or(300) as u64;
@@ -90,6 +90,6 @@ impl ConfigLoader {
 
 impl From<ConfigError> for DomainError {
     fn from(error: ConfigError) -> Self {
-        DomainError::ConfigError(error.to_string())
+        DomainError::config(error.to_string())
     }
 } 

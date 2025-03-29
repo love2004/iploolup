@@ -58,7 +58,7 @@ pub async fn get_ipv6(service_factory: web::Data<ServiceFactory>) -> impl Respon
 /// - `HttpResponse`: 返回適當的錯誤響應
 fn handle_error(err: DomainError) -> HttpResponse {
     match err {
-        DomainError::ValidationError(_) => HttpResponse::BadRequest().json(format!("{}", err)),
+        DomainError::Validation(_) => HttpResponse::BadRequest().json(format!("{}", err)),
         _ => HttpResponse::InternalServerError().json(format!("{}", err)),
     }
 } 

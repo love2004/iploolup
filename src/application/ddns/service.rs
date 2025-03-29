@@ -87,7 +87,7 @@ impl DdnsApplicationService {
         match self.config.ip_type.to_string().as_str() {
             "ipv4" => self.ip_service.get_ipv4().await,
             "ipv6" => self.ip_service.get_ipv6().await,
-            _ => Err(DomainError::ValidationError(format!("Invalid IP type: {}", self.config.ip_type))),
+            _ => Err(DomainError::validation(format!("Invalid IP type: {}", self.config.ip_type))),
         }
     }
     
@@ -134,7 +134,7 @@ impl DdnsApplicationService {
                 record_type: match self.config.ip_type.to_string().as_str() {
                     "ipv4" => "A".to_string(),
                     "ipv6" => "AAAA".to_string(),
-                    _ => return Err(DomainError::ValidationError("Invalid IP type".to_string())),
+                    _ => return Err(DomainError::validation("Invalid IP type".to_string())),
                 },
                 content: current_ip,
                 ttl: 120,
@@ -154,7 +154,7 @@ impl DdnsApplicationService {
             record_type: match self.config.ip_type.to_string().as_str() {
                 "ipv4" => "A".to_string(),
                 "ipv6" => "AAAA".to_string(),
-                _ => return Err(DomainError::ValidationError("Invalid IP type".to_string())),
+                _ => return Err(DomainError::validation("Invalid IP type".to_string())),
             },
             content: current_ip.clone(),
             ttl: 120,

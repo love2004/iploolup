@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use reqwest::header::HeaderMap;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::any::Any;
 
 /// Reqwest HTTP 客戶端實現
 pub struct ReqwestHttpClient {
@@ -121,6 +122,11 @@ impl HttpClient for ReqwestHttpClient {
         response.text().await.map_err(|e| {
             DomainError::LogicError(format!("Failed to read response body: {}", e))
         })
+    }
+
+    /// 實現 as_any 方法
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
