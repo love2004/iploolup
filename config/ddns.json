@@ -6,5 +6,13 @@
     "record_name": "mc.zhijings.com",
     "update_interval": 300,
     "ip_type": "ipv4"
+  },
+  {
+    "api_token": "cKBFsxbj-ZyOBNoTRaMtQ3QnFFHPKLiVm9iVSTxJ",
+    "zone_id": "287705ae3d7c0b8acbc799d5bb0a508c",
+    "record_id": "d88ae2b1028885d8a86d3ea4da13bb4b", 
+    "record_name": "v6.ddns.zhijings.com",
+    "update_interval": 300,
+    "ip_type": "ipv6"
   }
 ]

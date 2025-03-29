@@ -17,3 +17,4 @@ Thumbs.db
 # 如果專案有 Node.js 前端，忽略這些
 /node_modules
 /dist
+ddns.json

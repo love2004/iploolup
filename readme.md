@@ -154,6 +154,24 @@ cloudflare-ddns
 
 # 顯示幫助信息
 cloudflare-ddns --help
+
+# 顯示版本信息
+cloudflare-ddns --version
+
+# 指定配置文件
+cloudflare-ddns --config=/path/to/config.json
+
+# 設置日誌級別
+cloudflare-ddns --log=debug
+
+# 設置 Web 伺服器端口
+cloudflare-ddns --port=8888
+
+# 設置 Web 伺服器主機地址
+cloudflare-ddns --host=127.0.0.1
+
+# 組合使用選項
+cloudflare-ddns --ddns --log=debug --config=/path/to/config.json
 ```
 
 ### Web 介面
