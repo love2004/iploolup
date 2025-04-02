@@ -2,7 +2,6 @@ use actix_web::{web, get, post, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use crate::domain::config::DdnsConfig;
 use crate::ServiceFactory;
-use crate::domain::error::DomainError;
 use log::{info, error};
 
 /// 配置響應

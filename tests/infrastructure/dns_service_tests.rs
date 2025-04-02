@@ -1,7 +1,6 @@
 use cloudflare_ddns::domain::config::{DdnsConfig, IpType};
 use cloudflare_ddns::domain::dns::{DnsRecord, DnsService, DnsUpdateResult};
 use cloudflare_ddns::domain::error::DomainError;
-use serde_json::json;
 use async_trait::async_trait;
 
 // 簡單測試結構

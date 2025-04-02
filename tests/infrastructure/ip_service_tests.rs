@@ -1,8 +1,6 @@
-use cloudflare_ddns::domain::http::HttpClient;
 use cloudflare_ddns::domain::ip::IpService;
 use cloudflare_ddns::domain::error::DomainError;
 use async_trait::async_trait;
-use reqwest::header::HeaderMap;
 
 // 簡單的測試構造器
 struct TestIpService {
