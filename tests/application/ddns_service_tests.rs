@@ -46,7 +46,7 @@ mock! {
 #[cfg(test)]
 mod ddns_application_service_tests {
     use super::*;
-    use tokio_test;
+    
 
     fn create_test_config() -> DdnsConfig {
         DdnsConfig {

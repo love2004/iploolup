@@ -47,7 +47,6 @@ impl EventListener for DdnsServiceEventListener {
                 // 重新加載配置並更新服務
                 self.service_factory.reload_configs_and_restart_services().await;
             },
-            _ => {}
         }
     }
 }

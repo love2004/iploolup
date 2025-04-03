@@ -1,6 +1,6 @@
 use crate::domain::error::DomainError;
 use crate::domain::dns::{DnsService, DnsRecord, DnsUpdateResult};
-use crate::domain::http::{HttpClient, HttpClientExt, ArcHttpClientExt};
+use crate::domain::http::{HttpClientExt, ArcHttpClientExt};
 use crate::domain::config::DdnsConfig;
 use crate::infrastructure::http::ReqwestHttpClient;
 use async_trait::async_trait;

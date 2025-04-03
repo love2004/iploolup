@@ -1,7 +1,9 @@
 use actix_web::{web, get, Error};
-use actix_files::NamedFile;
+use actix_files::{NamedFile, Files};
 use std::path::PathBuf;
 use log::{info, error};
+use std::sync::Once;
+use crate::constants::{STATIC_INDEX_FILE, STATIC_DIR, STATIC_CSS_DIR, STATIC_JS_DIR};
 
 /// 首頁處理器
 /// 
@@ -12,7 +14,7 @@ use log::{info, error};
 pub async fn index() -> Result<NamedFile, Error> {
     info!("接收到首頁請求");
     
-    let path: PathBuf = PathBuf::from("static/index.html");
+    let path: PathBuf = PathBuf::from(STATIC_INDEX_FILE);
     match NamedFile::open(path) {
         Ok(file) => {
             info!("成功返回首頁文件");
@@ -39,7 +41,8 @@ pub async fn static_files(path: web::Path<String>) -> Result<NamedFile, Error> {
     let filename = path.into_inner();
     info!("接收到靜態文件請求: {}", filename);
     
-    let path = PathBuf::from(format!("static/{}", filename));
+    let path = PathBuf::from(format!("{}/{}", STATIC_DIR, filename));
+    
     match NamedFile::open(path) {
         Ok(file) => {
             info!("成功返回靜態文件: {}", filename);
@@ -62,10 +65,13 @@ pub async fn static_files(path: web::Path<String>) -> Result<NamedFile, Error> {
 /// 
 /// - 註冊 Web UI 路由
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
-    info!("配置Web UI路由");
-    cfg.service(
-        web::scope("/ui")
-            .service(index)
-            .service(static_files)
-    );
+    // 使用一個靜態變數確保只輸出一次日誌
+    static LOGGED: Once = Once::new();
+    LOGGED.call_once(|| {
+        info!("配置Web UI路由");
+    });
+    
+    cfg.service(index)
+        .service(Files::new("/css", STATIC_CSS_DIR))
+        .service(Files::new("/js", STATIC_JS_DIR));
 } 

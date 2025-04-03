@@ -3,7 +3,7 @@ use crate::domain::error::DomainError;
 use crate::infrastructure::config::FileConfigRepository;
 use crate::application::events::{EventManager, EventType, EventData};
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 use log::{info, error};
 use tokio::select;
 use tokio::time::{sleep, Duration};

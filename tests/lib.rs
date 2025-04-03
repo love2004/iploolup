@@ -5,7 +5,7 @@ mod infrastructure;
 // 集成測試 - 這些測試將檢查系統各部分的交互
 #[cfg(test)]
 mod integration_tests {
-    use cloudflare_ddns::application::config::ConfigService;
+    
     use cloudflare_ddns::domain::config::{DdnsConfig, IpType};
     use cloudflare_ddns::domain::dns::{DnsRecord, DnsService, DnsUpdateResult};
     use cloudflare_ddns::domain::error::DomainError;
@@ -16,11 +16,11 @@ mod integration_tests {
     use cloudflare_ddns::application::events::{EventManager, EventType, EventData, EventListener};
     use std::sync::Arc;
     use async_trait::async_trait;
-    use std::path::Path;
+    
     use std::fs;
     use tokio::fs::File;
     use tokio::io::AsyncWriteExt;
-    use chrono::Utc;
+    
     
     // 測試用IP服務
     struct TestIpService {
@@ -154,7 +154,7 @@ mod integration_tests {
     // 測試配置加載和驗證
     #[tokio::test]
     async fn test_config_loading() {
-        use cloudflare_ddns::infrastructure::config::FileConfigRepository;
+        
         
         // 創建臨時配置文件
         let temp_dir = std::env::temp_dir().join("ddns_test");

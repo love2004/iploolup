@@ -4,10 +4,8 @@ pub mod settings;
 pub use ddns::{DdnsConfig, IpType, DdnsConfigError};
 pub use settings::{Settings, ServerSettings};
 
-use std::env;
-use std::path::Path;
 use std::sync::Arc;
-use config::{Config, ConfigError, Environment, File};
+use config::{Config, ConfigError, Environment};
 use crate::domain::error::DomainError;
 
 /// 配置加載器
@@ -23,12 +21,6 @@ impl ConfigLoader {
 
         // 添加默認配置
         config_builder = config_builder.set_default("log.level", "info")?;
-        
-        // 從配置文件加載
-        let config_file = env::var("CONFIG_FILE").unwrap_or_else(|_| "config/ddns.json".to_string());
-        if Path::new(&config_file).exists() {
-            config_builder = config_builder.add_source(File::with_name(&config_file));
-        }
         
         // 從環境變量加載，前綴為 "DDNS_"
         config_builder = config_builder.add_source(

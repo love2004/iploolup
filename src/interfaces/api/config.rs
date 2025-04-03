@@ -1,8 +1,11 @@
 use actix_web::{web, get, post, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use crate::domain::config::DdnsConfig;
-use crate::ServiceFactory;
+use crate::application::ServiceFactory;
+use crate::application::error::ApplicationError;
 use log::{info, error};
+use std::sync::Arc;
+use super::common::handle_application_error;
 
 /// 配置響應
 #[derive(Serialize)]
@@ -36,10 +39,10 @@ struct ValidateConfigResponse {
 /// 
 /// # 路由
 /// 
-/// - `GET /api/config`
-#[get("/config")]
+/// - `GET /api/configs`
+#[get("")]
 pub async fn get_configs(
-    service_factory: web::Data<std::sync::Arc<ServiceFactory>>
+    service_factory: web::Data<Arc<ServiceFactory>>
 ) -> impl Responder {
     info!("收到獲取配置請求");
     
@@ -54,12 +57,8 @@ pub async fn get_configs(
             })
         },
         Err(e) => {
-            error!("獲取配置失敗: {}", e);
-            HttpResponse::InternalServerError().json(ConfigResponse {
-                success: false,
-                message: format!("獲取配置失敗: {}", e),
-                configs: None,
-            })
+            let app_error: ApplicationError = ApplicationError::DomainError(e);
+            handle_application_error(app_error, "獲取配置失敗")
         }
     }
 }
@@ -68,7 +67,7 @@ pub async fn get_configs(
 /// 
 /// # 路由
 /// 
-/// - `POST /api/config`
+/// - `POST /api/configs`
 /// 
 /// # 請求體
 /// 
@@ -77,9 +76,9 @@ pub async fn get_configs(
 /// # 返回
 /// 
 /// - 配置保存結果
-#[post("/config")]
+#[post("")]
 pub async fn save_configs(
-    service_factory: web::Data<std::sync::Arc<ServiceFactory>>,
+    service_factory: web::Data<Arc<ServiceFactory>>,
     req: web::Json<SaveConfigRequest>
 ) -> impl Responder {
     info!("收到保存配置請求，共 {} 個配置", req.configs.len());
@@ -95,12 +94,8 @@ pub async fn save_configs(
             })
         },
         Err(e) => {
-            error!("保存配置失敗: {}", e);
-            HttpResponse::InternalServerError().json(ConfigResponse {
-                success: false,
-                message: format!("保存配置失敗: {}", e),
-                configs: None,
-            })
+            let app_error: ApplicationError = ApplicationError::DomainError(e);
+            handle_application_error(app_error, "保存配置失敗")
         }
     }
 }
@@ -118,7 +113,7 @@ pub async fn save_configs(
 /// # 返回
 /// 
 /// - 配置驗證結果
-#[post("/config/validate")]
+#[post("/validate")]
 pub async fn validate_config(
     req: web::Json<ValidateConfigRequest>
 ) -> impl Responder {
@@ -127,6 +122,7 @@ pub async fn validate_config(
     // 驗證配置
     match req.config.validate() {
         Ok(_) => {
+            info!("配置驗證通過: {}", req.config.record_name);
             HttpResponse::Ok().json(ValidateConfigResponse {
                 success: true,
                 message: "配置驗證通過".to_string(),
@@ -134,9 +130,10 @@ pub async fn validate_config(
             })
         },
         Err(e) => {
-            info!("配置驗證失敗: {}", e);
+            // 驗證錯誤是預期的情況，不使用錯誤處理函數
+            error!("配置驗證失敗: {}", e);
             HttpResponse::Ok().json(ValidateConfigResponse {
-                success: true,
+                success: false,
                 message: format!("配置驗證失敗: {}", e),
                 is_valid: false,
             })

@@ -1,6 +1,7 @@
-use config::{Config, ConfigError, File};
+use config::ConfigError;
 use serde::Deserialize;
 use std::env;
+use log::info;
 
 /// 伺服器設置結構
 /// 
@@ -29,31 +30,13 @@ impl Settings {
     /// 
     /// # 功能
     /// 
-    /// 優先從環境變量加載設置，如果環境變量不存在則從配置文件加載
+    /// 從環境變量加載設置
     /// 
     /// # 返回
     /// 
     /// - `Result<Self, ConfigError>`: 成功時返回設置實例，失敗時返回錯誤
-    /// 
-    /// # 配置文件
-    /// 
-    /// - `config/default.toml`: 默認設置
-    /// - `config/{run_mode}.toml`: 環境特定設置
     pub fn new() -> Result<Self, ConfigError> {
-        // 嘗試從環境變量加載
-        if env::var("SERVER_HOST").is_ok() || env::var("SERVER_PORT").is_ok() {
-            return Self::from_env();
-        }
-        
-        // 從配置文件加載
-        let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "development".into());
-        
-        let s = Config::builder()
-            .add_source(File::with_name("config/default").required(true))
-            .add_source(File::with_name(&format!("config/{}", run_mode)).required(false))
-            .build()?;
-            
-        s.try_deserialize()
+        Self::from_env()
     }
     
     /// 從環境變量中獲取設置
@@ -63,6 +46,8 @@ impl Settings {
             .unwrap_or_else(|_| "8080".to_string())
             .parse::<u16>()
             .map_err(|e| ConfigError::Message(format!("Invalid port number: {}", e)))?;
+        
+        info!("從環境變量載入伺服器設置 - 主機: {}, 端口: {}", host, port);
             
         Ok(Self {
             server: ServerSettings {

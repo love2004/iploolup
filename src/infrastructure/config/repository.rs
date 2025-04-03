@@ -1,19 +1,16 @@
 use crate::domain::config::DdnsConfig;
 use crate::domain::error::DomainError;
+use crate::constants::CONFIG_FILE_PATH;
 use log::{info, error, warn};
 use std::fs::{self, File};
 use std::io::prelude::*;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::{RwLock, watch};
 use tokio::time::{sleep, Duration};
 use tokio::task;
 use serde_json;
 use serde_yaml;
-use toml;
-
-/// 配置文件路徑
-const CONFIG_FILE_PATH: &str = "config/ddns.json";
 
 /// 文件配置存儲庫
 pub struct FileConfigRepository {
@@ -241,9 +238,8 @@ impl FileConfigRepository {
             return Ok(config);
         }
         
-        // 嘗試解析為 TOML
-        toml::from_str::<DdnsConfig>(content)
-            .map_err(|e| DomainError::config(format!("Failed to parse config file: {}", e)))
+        // 如果都解析失敗
+        Err(DomainError::config("Failed to parse config file, not valid JSON or YAML format".to_string()))
     }
 }
 

@@ -2,6 +2,7 @@ pub mod domain;
 pub mod application;
 pub mod infrastructure;
 pub mod interfaces;
+pub mod constants;
 
 // 重新導出常用類型和結構
 pub use application::ServiceFactory;
@@ -9,6 +10,7 @@ pub use domain::config::{DdnsConfig, IpType, Settings};
 pub use domain::error::DomainError;
 pub use application::error::ApplicationError;
 pub use application::events::{EventManager, EventType, EventData};
+pub use constants::*;
 
 // 重新導出服務啟動函數
 pub use actix_web::{web, App, HttpServer};
@@ -35,9 +37,10 @@ use log::info;
 /// - 配置 API 路由
 pub async fn run_server(host: &str, port: u16) -> std::io::Result<()> {
     let address = format!("{}:{}", host, port);
+    info!("準備在 {} 上啟動 Web 伺服器", address);
     
     // 確保靜態文件目錄存在
-    let static_dir = Path::new("static");
+    let static_dir = Path::new(STATIC_DIR);
     if !static_dir.exists() {
         std::fs::create_dir_all(static_dir)?;
         info!("Created static directory");

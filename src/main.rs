@@ -25,7 +25,6 @@ fn help() {
     println!("  --version, -v        顯示版本信息");
     println!("  --ddns               只運行 DDNS 更新服務");
     println!("  --web                只運行 Web 伺服器");
-    println!("  --config=<file>      指定配置文件路徑");
     println!("  --log=<level>        設置日誌級別 (debug, info, warn, error)");
     println!("  --port=<port>        設置 Web 伺服器端口");
     println!("  --host=<host>        設置 Web 伺服器主機地址");
@@ -36,7 +35,7 @@ fn help() {
 fn version() {
     let version = env!("CARGO_PKG_VERSION");
     println!("Rust DDNS 更新工具 v{}", version);
-    println!("作者: Rust DDNS 團隊");
+    println!("作者: zhijing");
     println!("授權: MIT");
 }
 
@@ -64,11 +63,6 @@ fn start_ddns_service() {
     // 傳遞日誌級別
     if let Ok(log_level) = env::var("RUST_LOG") {
         command.env("RUST_LOG", log_level);
-    }
-    
-    // 傳遞配置文件路徑
-    if let Ok(config_file) = env::var("CONFIG_FILE") {
-        command.env("CONFIG_FILE", config_file);
     }
     
     // 添加 --ddns 參數
@@ -116,7 +110,6 @@ async fn main() -> std::io::Result<()> {
     // 解析命令行參數
     let mut run_ddns = false;
     let mut run_web = false;
-    let mut config_path = None;
     let mut log_level = None;
     let mut port = None;
     let mut host = None;
@@ -135,8 +128,6 @@ async fn main() -> std::io::Result<()> {
                 run_ddns = true;
             } else if arg == "--web" {
                 run_web = true;
-            } else if arg.starts_with("--config=") {
-                config_path = Some(arg.trim_start_matches("--config=").to_string());
             } else if arg.starts_with("--log=") {
                 log_level = Some(arg.trim_start_matches("--log=").to_string());
             } else if arg.starts_with("--port=") {
@@ -167,11 +158,6 @@ async fn main() -> std::io::Result<()> {
     
     // 初始化日誌系統
     env_logger::builder().format_timestamp_millis().init();
-    
-    // 設置配置文件路徑
-    if let Some(path) = config_path {
-        env::set_var("CONFIG_FILE", path);
-    }
     
     // 如果同時指定了 --ddns 和 --web，或都沒有指定，則運行兩個服務
     if (run_ddns && run_web) || (!run_ddns && !run_web) {
@@ -252,7 +238,17 @@ async fn run_ddns_service() -> std::io::Result<()> {
     
     info!("Successfully loaded {} DDNS configurations", configs.len());
     
+    // 創建信號通道用於等待終止信號
+    let (tx, rx) = mpsc::channel();
+    
+    // 更新全局控制變量
+    if let Ok(mut ctrl) = DDNS_CONTROL.lock() {
+        *ctrl = Some(tx);
+    }
+    
     // 啟動所有配置的 DDNS 服務
+    let mut service_handles = Vec::new();
+    
     for ddns_config in configs {
         let ip_type = ddns_config.ip_type.clone();
         info!("Starting {} DDNS update service", ip_type);
@@ -261,16 +257,23 @@ async fn run_ddns_service() -> std::io::Result<()> {
         let ddns_service = service_factory.create_ddns_service(ddns_config).await;
         
         // 啟動自動更新任務
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             ddns_service.start_auto_update().await;
         });
+        
+        service_handles.push(handle);
     }
-
-    // 啟動 Web 服務器
-    let settings = Settings::new().expect("Failed to load settings");
-    info!("Starting Web server at {}:{}", settings.server.host, settings.server.port);
-    run_server(&settings.server.host, settings.server.port).await?;
     
+    // 等待終止信號
+    let _ = rx.recv();
+    info!("接收到終止信號，DDNS服務正在關閉");
+    
+    // 等待所有任務完成
+    for handle in service_handles {
+        let _ = handle.await;
+    }
+    
+    info!("DDNS服務已關閉");
     Ok(())
 }
 

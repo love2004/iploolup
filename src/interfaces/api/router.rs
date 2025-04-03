@@ -4,6 +4,7 @@ use super::health::health_check;
 use super::status::get_status;
 use super::update::{force_update, restart_service};
 use super::config::{get_configs, save_configs, validate_config};
+use log::info;
 
 /// 配置 API 路由
 /// 
@@ -15,6 +16,12 @@ use super::config::{get_configs, save_configs, validate_config};
 /// 
 /// - 註冊 API 路由
 pub fn configure_routes(cfg: &mut web::ServiceConfig) {
+    // 使用一個靜態變數確保只輸出一次日誌
+    static LOGGED: std::sync::Once = std::sync::Once::new();
+    LOGGED.call_once(|| {
+        info!("註冊API路由: /api/ip, /api/health, /api/status, /api/update, /api/configs");
+    });
+    
     cfg.service(
         web::scope("/api")
             .service(
@@ -26,8 +33,11 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
             .service(get_status)
             .service(force_update)
             .service(restart_service)
-            .service(get_configs)
-            .service(save_configs)
-            .service(validate_config)
+            .service(
+                web::scope("/configs")
+                    .service(get_configs)
+                    .service(save_configs)
+                    .service(validate_config)
+            )
     );
 } 
